@@ -27,6 +27,7 @@
     "react": "16.13.1",
     "react-native": "0.63.3",
     "react-native-bottom-bar": "^0.3.3",
+    "react-native-bouncy-checkbox": "^2.1.0",
     "react-native-gesture-handler": "^1.8.0",
     "react-native-maps": "0.27.1",
     "react-native-paper": "^4.7.2",

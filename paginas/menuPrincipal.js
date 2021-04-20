@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-community/async-storage";
 import Geolocation from "@react-native-community/geolocation";
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View, Image,  ActivityIndicator, Alert, SafeAreaView } from "react-native";
+import { StyleSheet, Text, View, Image,  ActivityIndicator, Alert, Pressable, Modal} from "react-native";
 import MapView, {Callout, Marker, PROVIDER_GOOGLE, Polyline} from "react-native-maps";
 import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen'; //Ecrã responsivo
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
@@ -9,10 +9,11 @@ import { faTaxi, faMapMarkerAlt, faRoute, faParking} from '@fortawesome/free-sol
 import {PermissionsAndroid} from 'react-native';
 
 
+
 let markerURL= 'https://geo.cm-viana-castelo.pt/arcgis/rest/services/Viana_acessivel/MapServer/1/query?where=1%3D1&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentsOnly=false&datumTransformation=&parameterValues=&rangeValues=&f=pjson';
 let markerTaxi = 'https://geo.cm-viana-castelo.pt/arcgis/rest/services/Viana_acessivel/MapServer/2/query?where=1%3D1&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentsOnly=false&datumTransformation=&parameterValues=&rangeValues=&f=pjson';
 let markerEstacionamento= 'https://geo.cm-viana-castelo.pt/arcgis/rest/services/Viana_acessivel/MapServer/3/query?where=1%3D1&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentsOnly=false&datumTransformation=&parameterValues=&rangeValues=&f=pjson';
-let trajetos = 'https://geo.cm-viana-castelo.pt/arcgis/rest/services/Viana_acessivel/MapServer/4/query?where=1%3D1&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentsOnly=false&datumTransformation=&parameterValues=&rangeValues=&f=pjson';
+
 
 
 let trajetosS = 'https://geo.cm-viana-castelo.pt/arcgis/rest/services/Viana_acessivel/MapServer/4/query?where=1%3D1&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=StartPoint&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentsOnly=false&datumTransformation=&parameterValues=&rangeValues=&f=pjson';
@@ -25,12 +26,15 @@ let matriz;
 let valores = [];
 let dataI= [];
 
+
 function menuPrincipal({navigation}) {
+
+  const [modalVisible, setModalVisible] = useState(false); // MODAL
+
   const [state, setState] = useState({colorId: 1});
-  const [color, setColor] = useState("");
 
   const [incapacidade, setIncapacidade] = useState("");
-
+  const [color, setColor] = useState("");
 
   const [isLoad, setLoad]= useState(true);
   const [type, setType] = useState(1);
@@ -398,6 +402,62 @@ const requestLocationPermission = async () => {
 
         <View style={styles.container}>
 
+    
+              <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => {
+                  Alert.alert("Modal has been closed.");
+                  setModalVisible(!modalVisible);
+                }}
+              >
+                <View style={styles.centeredView}>
+                  <View style={styles.modalView}>
+                    <Text style={styles.modalText}>Escolher tipo de Trajeto:</Text>
+                    
+
+                    <Pressable
+                      style={[styles.button, {backgroundColor: color}]}
+                      onPress={() => console.log("click")}>
+                      <Text style={styles.textStyle}>Trajeto mais Adequado</Text>
+                    </Pressable>
+
+                    <Pressable
+                      style={[styles.button, {backgroundColor: color}]}
+                      onPress={() => console.log("click")}>
+                      <Text style={styles.textStyle}>Trajeto mais Rápido</Text>
+                    </Pressable>
+
+                    <Pressable
+                      style={[styles.button, {backgroundColor: color}]}
+                      onPress={() => console.log("click")}>
+                      <Text style={styles.textStyle}>Menor declive</Text>
+                    </Pressable>
+
+                    <Pressable
+                      style={[styles.button, {backgroundColor: color}]}
+                      onPress={() => console.log("click")}>
+                      <Text style={styles.textStyle}>Trajeto mais curto (distancia real)</Text>
+                    </Pressable>
+
+                    <Pressable
+                      style={[styles.button, {backgroundColor: color}]}
+                      onPress={() => console.log("click")}>
+                      <Text style={styles.textStyle}>Trajeto mais curto (euclideano)</Text>
+                    </Pressable>
+                    
+                    
+                    <Pressable
+                      style={styles.cancel}
+                      onPress={() => setModalVisible(!modalVisible)}>
+                      <Text>Cancelar</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </Modal>
+
+
                   {(() =>{ 
                     if(type == 1) {
                       return(
@@ -412,7 +472,7 @@ const requestLocationPermission = async () => {
                            coordinate={{latitude: marker.geometry.y,
                                        longitude: marker.geometry.x}}>
      
-                           <Callout tooltip onPress={() => navigation.navigate('teste', {matriz: matriz, valores: valores, incapacidade: incapacidade, allData: dataI, end: marker.attributes.Ponto})}>
+                           <Callout tooltip onPress={() => setModalVisible(true)/*navigation.navigate('teste', {matriz: matriz, valores: valores, incapacidade: incapacidade, allData: dataI, end: marker.attributes.Ponto}) */}>
                              <View>
                               <View style={styles.bubble}>
                                   <Text style={styles.callout}>{marker.attributes.DESIGNACAO}</Text>
@@ -576,6 +636,57 @@ const requestLocationPermission = async () => {
 }
 
 const styles = StyleSheet.create({
+
+// -- MODAL --
+centeredView: {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+  marginTop: 22
+},
+modalView: {
+  margin: 20,
+  backgroundColor: "white",
+  borderRadius: 20,
+  padding: 35,
+  alignItems: "center",
+  shadowColor: "#000",
+  shadowOffset: {
+    width: 0,
+    height: 2
+  },
+  shadowOpacity: 0.25,
+  shadowRadius: 4,
+  elevation: 5
+},
+button: {
+  borderRadius: 20,
+  marginBottom: 16,
+  padding: 6,
+  alignSelf: 'stretch',
+  alignItems: 'center',
+  elevation: 5,
+  backgroundColor: "#2196F3",
+},
+textStyle: {
+  color: "black",
+  textAlign: "center"
+},
+modalText: {
+  fontSize: 20,
+  color: "black",
+  fontWeight: "bold",
+  marginBottom: 25,
+  textAlign: "center"
+},
+
+cancel: {
+
+  marginTop: 15,
+  alignSelf: "flex-end"
+},
+// ------------
+
   image:{
     width: 50,
     height: 50,
