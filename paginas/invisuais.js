@@ -1,11 +1,10 @@
-import AsyncStorage from "@react-native-community/async-storage";
 import React, { useEffect, useState } from "react";
 import { FlatList } from "react-native-gesture-handler";
-import { StyleSheet, Text, TouchableOpacity, View, Alert} from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View, Alert, Modal, Pressable} from "react-native";
 import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faTaxi, faMapMarkerAlt, faParking} from '@fortawesome/free-solid-svg-icons';
-
+import * as geolib from 'geolib';
 
 //WebServices
 let destinos= 'https://geo.cm-viana-castelo.pt/arcgis/rest/services/Viana_acessivel/MapServer/1/query?where=1%3D1&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentsOnly=false&datumTransformation=&parameterValues=&rangeValues=&f=pjson';
@@ -16,15 +15,24 @@ let trajetosS = 'https://geo.cm-viana-castelo.pt/arcgis/rest/services/Viana_aces
 let start = 'https://geo.cm-viana-castelo.pt/arcgis/rest/services/Viana_acessivel/MapServer/4/query?where=1%3D1&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=StartPoint&returnGeometry=false&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=true&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentsOnly=false&datumTransformation=&parameterValues=&rangeValues=&f=pjson';
 let end = 'https://geo.cm-viana-castelo.pt/arcgis/rest/services/Viana_acessivel/MapServer/4/query?where=1%3D1&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=EndPoint&returnGeometry=false&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=true&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentsOnly=false&datumTransformation=&parameterValues=&rangeValues=&f=pjson';
 
-let matriz;
 let valores=[];
 let dataI= [];
+let ponto;
+
+
+//Tipos de matriz
+let matriz;         //Mais apropriado
+let matrizC;        //Mais curta
+let matrizT;        //Mais rápida
+let matrizD;        //Menos Declive
+let matrizE;        //Matriz Euclidiana
+
 
 function invisuais({navigation}) {
 const [data, setData] = useState([]); //Array para armazenar os valores do Json
 const [state, setState] = useState({colorId: 1});
 const [type, setType] = useState(1);
-
+const [modalVisible, setModalVisible] = useState(false); // MODAL
 
 const [startP, setStartP]= useState();
 const [endP, setEndP]= useState();
@@ -103,42 +111,51 @@ useEffect(() => {
   
   
   // Criar a matriz
+  
   criarMatriz = () =>{
-  //StartPoints 
-      for(let i= 0; i< startP.length; i++){
-        valores.push(startP[i].attributes.StartPoint);
-      }
   
-  //Add endPoints
-  for(let j=0; j <endP.length; j++){
-      let existe = false;
-      for(let x=0; x< valores.length; x++){
+    //StartPoints 
+        for(let i= 0; i< startP.length; i++){
+          valores.push(startP[i].attributes.StartPoint);
+        }
+    
+    //Add endPoints
+    for(let j=0; j <endP.length; j++){
+        let existe = false;
+        for(let x=0; x< valores.length; x++){
+    
+            if(endP[j].attributes.EndPoint == valores[x]){
+                existe = true;
+            }
+        }
+    
+        if(existe == false){
+            valores.push(endP[j].attributes.EndPoint);
+            arrayEnd.push(endP[j].attributes.EndPoint); //Array com os endpoints que são StartPoints
+        }
+    }
+    
+    let num = valores.length;
   
-          if(endP[j].attributes.EndPoint == valores[x]){
-              existe = true;
-          }
-      }
+    matriz= Array(num).fill(null).map(() => Array(num).fill(0));
+    matrizC= Array(num).fill(null).map(() => Array(num).fill(0));
+    matrizD= Array(num).fill(null).map(() => Array(num).fill(0));
+    matrizT= Array(num).fill(null).map(() => Array(num).fill(0));
+    matrizE= Array(num).fill(null).map(() => Array(num).fill(0));
   
-      if(existe == false){
-          valores.push(endP[j].attributes.EndPoint);
-          arrayEnd.push(endP[j].attributes.EndPoint); //Array com os endpoints que são StartPoints
-      }
-  }
+    //preencherMatriz StartPoitns
+    for(let a=0; a< numI; a++){
+    var start = dataI[a].attributes.StartPoint;
+    var end = dataI[a].attributes.EndPoint;
+    var peso;  //Trajeto Adequado
+    var inc;   //Incapacidade Utl
   
-  let num = valores.length;
+    //----------Matrizes Adicionais
+    var comprimento;
+    var tempo;
+    var declive;
   
-  
-  matriz= Array(num).fill(null).map(() => Array(num).fill(0));
-  
-
-  //preencherMatriz StartPoitns
-  for(let a=0; a< numI; a++){
-  var start = dataI[a].attributes.StartPoint;
-  var end = dataI[a].attributes.EndPoint;
-  var peso;
-  var inc;
- 
-  //Incapacidade do utilizador
+    //---------------------------------------Incapacidade do utilizador--------------------------------------------
  inc = dataI[a].attributes.Invisual
  
 
@@ -157,36 +174,132 @@ useEffect(() => {
     peso = 1;
   }
 
- 
-  iStart= valores.indexOf(start);
-  iEnd= valores.indexOf(end);
-
+  //-----------------------------------Comprimento do trajeto----------------------------------------
+  comprimento = dataI[a].attributes.compriment
   
-  for(let b=0; b<arrayEnd.length; b++){ //
-    if(end == arrayEnd[b]){
-      matriz[iEnd][iStart] = peso;
-      matriz[iEnd][iStart] = peso;
-    }else{
-      matriz[iStart][iEnd] = peso;
-      matriz[iEnd][iStart] = peso
+  //--------------------------------------Tempo do trajeto------------------------------------------
+  tempo = dataI[a].attributes.minutes
+  
+  //--------------------------------------Declive do trajeto------------------------------------------
+  declive = dataI[a].attributes.declive
+  
+  //------------------------------------------Distância Euclidiana---------------------------------------
+  let tamanho = dataI[a].geometry.paths[0].length; 
+  
+  dist = geolib.getDistance(
+    { latitude: dataI[a].geometry.paths[0][0][1], longitude: dataI[a].geometry.paths[0][0][1]},
+    { latitude: dataI[a].geometry.paths[0][tamanho-1][1], longitude: dataI[a].geometry.paths[0][tamanho-1][0] }
+  );
+  
+  
+    iStart= valores.indexOf(start);
+    iEnd= valores.indexOf(end);
+  
+  
+    
+    for(let b=0; b<arrayEnd.length; b++){ //
+      if(end == arrayEnd[b]){
+        matriz[iEnd][iStart] = peso;
+     
+        matrizC[iEnd][iStart] = comprimento;
+  
+        matrizT[iEnd][iStart] = tempo;
+  
+        matrizD[iEnd][iStart] = declive;
+  
+        matrizE[iEnd][iStart] = dist;
+      }else{
+        matriz[iStart][iEnd] = peso;
+        matriz[iEnd][iStart] = peso;
+        
+        matrizC[iStart][iEnd] = comprimento;
+        matrizC[iEnd][iStart] = comprimento;
+  
+         
+        matrizT[iStart][iEnd] = tempo;
+        matrizT[iEnd][iStart] = tempo;
+  
+        matrizD[iStart][iEnd] = declive;
+        matrizD[iEnd][iStart] = declive;
+        
+        matrizE[iStart][iEnd] = dist;
+        matrizE[iEnd][iStart] = dist;
+  
+      }
     }
-  }
-  }
+    }
+  
+    }  
 
-
-  }
-
-
+    obterPonto = (i) => {
+      ponto = i
+      console.log("Ola" + ponto);
+    }
+   
 
         return(
             <View style={styles.container}>
+               <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => {
+                  Alert.alert("Modal has been closed.");
+                  setModalVisible(!modalVisible);
+                }}
+              >
+                <View style={styles.centeredView}>
+                  <View style={styles.modalView}>
+                    <Text style={styles.modalText}>Escolher tipo de Trajeto:</Text>
+                    
+
+                    <Pressable
+                      style={styles.button}
+                      onPress={() => {setModalVisible(false) ;navigation.navigate('teste', {matriz: matriz, valores: valores, incapacidade: "Invisual", allData: dataI, end: ponto})}}>
+                      <Text style={styles.textStyle}>Trajeto mais Adequado</Text>
+                    </Pressable>
+
+                    <Pressable
+                      style={styles.button}
+                      onPress={() => {setModalVisible(false) ;navigation.navigate('teste', {matriz: matrizT, valores: valores, incapacidade: "Invisual", allData: dataI, end: ponto})}}>
+                      <Text style={styles.textStyle}>Trajeto mais Rápido</Text>
+                    </Pressable>
+
+                    <Pressable
+                      style={styles.button}
+                      onPress={() => {setModalVisible(false) ;navigation.navigate('teste', {matriz: matrizD, valores: valores, incapacidade:  "Invisual", allData: dataI, end: ponto})}}>
+                      <Text style={styles.textStyle}>Menor declive</Text>
+                    </Pressable>
+
+                    <Pressable
+                      style={styles.button}
+                      onPress={() => {setModalVisible(false); navigation.navigate('teste', {matriz: matrizC, valores: valores, incapacidade:  "Invisual", allData: dataI, end: ponto})}}>
+                      <Text style={styles.textStyle}>Trajeto mais curto (distancia real)</Text>
+                    </Pressable>
+
+                    <Pressable
+                      style={styles.button}
+                      onPress={() => {setModalVisible(false); navigation.navigate('teste', {matriz: matrizE, valores: valores, incapacidade:  "Invisual", allData: dataI, end: ponto})}}>
+                      <Text style={styles.textStyle}>Trajeto mais curto (euclideano)</Text>
+                    </Pressable>
+                    
+                    
+                    <Pressable
+                      style={[styles.cancel]}
+                      onPress={() => setModalVisible(!modalVisible)}>
+                      <Text>Cancelar</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </Modal>
+
             {(() =>{
                     if(type == 1) {
                     return(
                         <FlatList
                         data= {data}
                         renderItem={({item})=> (
-                           <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('teste', {matriz: matriz, valores: valores, incapacidade: "Invisual", allData: dataI, end: item.attributes.Ponto})}>
+                           <TouchableOpacity style={styles.item} onPress={() => {this.obterPonto(item.attributes.Ponto); setModalVisible(true)}}>
                                 <Text style={styles.texto}>{item.attributes.DESIGNACAO}</Text>
                            </TouchableOpacity>
                         )} 
@@ -197,7 +310,7 @@ useEffect(() => {
                             <FlatList
                             data= {data}
                             renderItem={({item})=> (
-                               <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('teste', {matriz: matriz, valores: valores, incapacidade: "Invisual", allData: dataI, end: item.attributes.Ponto})}>
+                               <TouchableOpacity style={styles.item} onPress={() => {this.obterPonto(item.attributes.Ponto); setModalVisible(true)}}>
                                     <Text style={styles.texto}>{item.attributes.RUA}</Text>
                                     <Text style={styles.lugares}>Lugares disponíveis:{item.attributes.LUGARES}</Text>
                                </TouchableOpacity>
@@ -234,7 +347,56 @@ useEffect(() => {
 
 
 const styles = StyleSheet.create({
-    container: {
+     // -- MODAL --
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5
+  },
+  button: {
+    borderRadius: 20,
+    marginBottom: 16,
+    padding: 6,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    elevation: 5,
+    backgroundColor: '#DBDBDB',
+  },
+  textStyle: {
+    color: "black",
+    textAlign: "center"
+  },
+  modalText: {
+    fontSize: 20,
+    color: "black",
+    fontWeight: "bold",
+    marginBottom: 25,
+    textAlign: "center"
+  },
+
+  cancel: {
+
+    marginTop: 15,
+    alignSelf: "flex-end"
+  },
+// ------------
+  container: {
         flex: 1, 
         backgroundColor: '#DBDBDB',
         justifyContent: "center",
