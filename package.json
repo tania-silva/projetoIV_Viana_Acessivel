@@ -1,0 +1,56 @@
+{
+  "name": "menu",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "start": "react-native start",
+    "test": "jest",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^1.2.34",
+    "@fortawesome/free-regular-svg-icons": "^5.15.2",
+    "@fortawesome/free-solid-svg-icons": "^5.15.2",
+    "@fortawesome/react-native-fontawesome": "^0.2.6",
+    "@react-native-community/async-storage": "^1.12.1",
+    "@react-native-community/geolocation": "^2.0.2",
+    "@react-native-community/masked-view": "^0.1.10",
+    "@react-navigation/bottom-tabs": "^5.11.8",
+    "@react-navigation/drawer": "^5.11.4",
+    "@react-navigation/native": "^5.8.7",
+    "@react-navigation/stack": "^5.12.6",
+    "font-awesome": "^4.7.0",
+    "geolib": "^3.3.1",
+    "node-dijkstra": "^2.5.0",
+    "react": "16.13.1",
+    "react-native": "0.63.3",
+    "react-native-bottom-bar": "^0.3.3",
+    "react-native-gesture-handler": "^1.8.0",
+    "react-native-maps": "0.27.1",
+    "react-native-paper": "^4.7.2",
+    "react-native-permissions": "^2.2.2",
+    "react-native-reanimated": "^1.7.0",
+    "react-native-responsive-screen": "^1.4.2",
+    "react-native-safe-area-context": "^3.1.8",
+    "react-native-screens": "^2.13.0",
+    "react-native-shared-preferences": "^1.0.2",
+    "react-native-svg": "^12.1.0",
+    "react-native-vector-icons": "^7.1.0",
+    "scheduler": "^0.14.0"
+  },
+  "devDependencies": {
+    "@babel/core": "7.12.3",
+    "@babel/runtime": "7.12.5",
+    "@react-native-community/eslint-config": "1.1.0",
+    "babel-jest": "25.5.1",
+    "eslint": "6.8.0",
+    "jest": "25.5.4",
+    "metro-react-native-babel-preset": "0.59.0",
+    "react-test-renderer": "16.13.1"
+  },
+  "jest": {
+    "preset": "react-native"
+  }
+}
