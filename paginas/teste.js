@@ -110,8 +110,8 @@ calcularCaminho = () =>{
 
 
 // Calcular o index do StartPoint e EndPoint
-     iStart= valores.indexOf(1285);
-     iEnd= valores.indexOf(1254);
+     iStart= valores.indexOf(start);
+     iEnd= valores.indexOf(end);
 
     var distances = [];  //Distancia de todos os nodes ao StarPoint
     var priorities = []; //Prioridade dos nodos
